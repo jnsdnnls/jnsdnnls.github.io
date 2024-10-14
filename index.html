@@ -3,32 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Circuit Breaker Game</title>
+    <title>Game</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div id="game-container">
+      <canvas id="game-canvas" class="hidden"></canvas>
+    </div>
     <div id="start-screen" class="screen">
-      <h1>Circuit Breaker Game</h1>
+      <h1>Welcome to the Game</h1>
       <button id="start-button">Start Game</button>
     </div>
-
-    <div id="game-container" class="hidden">
-      <canvas id="trail-canvas"></canvas>
-      <div id="player"></div>
-      <div id="start-point"></div>
-      <div id="end-point"></div>
-      <div id="trail-container"></div>
-      <div class="scan-container">
-        <div class="scanline"></div>
-      </div>
-    </div>
-
     <div id="end-screen" class="screen hidden">
-      <h1>Game Over!</h1>
-      <p id="end-message">You've reached the endpoint!</p>
+      <h1 id="end-message"></h1>
       <button id="restart-button">Restart Game</button>
     </div>
-
-    <script src="game.js"></script>
+    <div class="scanline"></div>
+    <script type="module" src="game.js"></script>
   </body>
 </html>

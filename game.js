@@ -34,6 +34,14 @@ const audioContext = new (window.AudioContext || window.webkitAudioContext)(); /
 let keyPressSoundBuffer;
 let backgroundMusicBuffer;
 let backgroundMusicSource;
+let keyPressGainNode = audioContext.createGain(); // Gain node for key press sound
+let musicGainNode = audioContext.createGain(); // Gain node for background music
+
+let isMusicPlaying = false;
+
+keyPressGainNode.gain.value = 1; // Max volume (range 0 to 1)
+musicGainNode.gain.value = 0.5; // Lower volume for background music
+
 
 // Load the sound file
 fetch("keyPress.mp3")
@@ -81,22 +89,27 @@ function resizeCanvas() {
   drawGame();
 }
 
+// Play background music with volume control
 function playBackgroundMusic() {
-  if (!backgroundMusicBuffer) return; // Ensure the music buffer is loaded
+  if (isMusicPlaying || !backgroundMusicBuffer) return; // Ensure the music buffer is loaded and it's not already playing
 
   // Create a new audio buffer source
   backgroundMusicSource = audioContext.createBufferSource();
   backgroundMusicSource.buffer = backgroundMusicBuffer; // Set the music buffer
 
-  // Connect the source to the destination (speakers)
-  backgroundMusicSource.connect(audioContext.destination);
+  // Connect the source to the gain node, and then to the destination (speakers)
+  backgroundMusicSource.connect(musicGainNode);
+  musicGainNode.connect(audioContext.destination);
 
   // Set the music to loop
   backgroundMusicSource.loop = true;
 
   // Start playing the music
   backgroundMusicSource.start(0);
+
+  isMusicPlaying = true; // Set the flag to true to indicate music is playing
 }
+
 
 
 function playRandomizedPitchSound() {
@@ -106,10 +119,14 @@ function playRandomizedPitchSound() {
   source.buffer = keyPressSoundBuffer; // Set the sound buffer
 
   // Randomize the playback rate (between 0.8 and 1.2 for slight variation)
-  source.playbackRate.value = Math.random() * 0.4 + 1.2; // Random value between 0.8 and 1.2
+  source.playbackRate.value = Math.random() * 0.4 + 1.2;
 
-  source.connect(audioContext.destination); // Connect the source to the output (speakers)
-  source.start(0); // Start playing the sound
+  // Connect the source to the gain node, then to the destination
+  source.connect(keyPressGainNode);
+  keyPressGainNode.connect(audioContext.destination);
+
+  // Start playing the sound
+  source.start(0);
 }
 
 function drawGame() {
@@ -149,7 +166,7 @@ function drawWalls() {
     const scaledHeight = (wall.height / GAME_HEIGHT) * canvas.height;
     const borderRadius = 8; // Adjust this value for the desired border radius
 
-    ctx.fillStyle = "rgba(255, 0, 0, 0.5)"; // Set fill color
+    ctx.fillStyle = "rgba(255, 0, 0, 0)"; // Set fill color
     drawRoundedRect(scaledX, scaledY, scaledWidth, scaledHeight, borderRadius); // Draw the wall with rounded corners
   });
 }
@@ -375,3 +392,4 @@ document.addEventListener("keydown", (event) => {
 
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
+

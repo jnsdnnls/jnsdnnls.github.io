@@ -366,29 +366,46 @@ document.getElementById("restart-button").addEventListener("click", () => {
 currentDirection = { x: 1, y: 0 };
 
 document.addEventListener("keydown", (event) => {
+  const keyMapping = levels[currentLevelIndex].keyMapping;
+
+  // Map the keys according to the current level's random mapping
   switch (event.code) {
-    case "ArrowUp":
-    case "KeyW":
+    case keyMapping.up:
       currentDirection = { x: 0, y: -1 };
       playRandomizedPitchSound(); 
       break;
-    case "ArrowDown":
-    case "KeyS":
+    case keyMapping.down:
       currentDirection = { x: 0, y: 1 };
       playRandomizedPitchSound(); 
       break;
-    case "ArrowLeft":
-    case "KeyA":
+    case keyMapping.left:
       currentDirection = { x: -1, y: 0 };
       playRandomizedPitchSound(); 
       break;
-    case "ArrowRight":
-    case "KeyD":
+    case keyMapping.right:
       currentDirection = { x: 1, y: 0 };
       playRandomizedPitchSound(); 
       break;
   }
 });
+
+function randomizeKeyMapping() {
+  const directions = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
+  const shuffled = directions.sort(() => Math.random() - 0.5); // Shuffle the directions array
+
+  return {
+    up: shuffled[0],
+    down: shuffled[1],
+    left: shuffled[2],
+    right: shuffled[3],
+  };
+}
+
+// Assign random key mappings to all levels on game start
+levels.forEach((level) => {
+  level.keyMapping = randomizeKeyMapping();
+});
+
 
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();

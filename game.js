@@ -10,7 +10,7 @@ const GAME_HEIGHT = 1080;
 let currentPosition = { x: 100, y: 100 };
 let currentDirection = { x: 0, y: 0 };
 let gameInterval;
-let currentLevelIndex = 1; // Start with level 0
+let currentLevelIndex = 0; // Start with level 0
 
 let gameState = "start";
 let walls = [];
@@ -24,11 +24,34 @@ const startImage = new Image();
 startImage.src = "start.png"; // Path to your start point image
 
 const endImage = new Image();
-endImage.src = "start.png"; // Path to your end point image
+endImage.src = "end.png"; // Path to your end point image
 
 // Preload the background image
 const bgImage = new Image();
 bgImage.src = levels[currentLevelIndex].backgroundImage;
+
+const audioContext = new (window.AudioContext || window.webkitAudioContext)(); // Create audio context
+let keyPressSoundBuffer;
+let backgroundMusicBuffer;
+let backgroundMusicSource;
+
+// Load the sound file
+fetch("keyPress.mp3")
+  .then(response => response.arrayBuffer())
+  .then(data => audioContext.decodeAudioData(data))
+  .then(buffer => {
+    keyPressSoundBuffer = buffer; // Store the decoded audio data
+  })
+  .catch(error => console.error("Error loading sound:", error));
+
+fetch("backgroundMusic.mp3") // Replace with your music file path
+  .then(response => response.arrayBuffer())
+  .then(data => audioContext.decodeAudioData(data))
+  .then(buffer => {
+    backgroundMusicBuffer = buffer; // Store the decoded audio data
+  })
+  .catch(error => console.error("Error loading background music:", error));
+
 
 function resizeCanvas() {
   const aspectRatio = GAME_WIDTH / GAME_HEIGHT;
@@ -56,6 +79,37 @@ function resizeCanvas() {
   canvas.style.margin = `${padding / 2}px`; // Centering the canvas with margin
 
   drawGame();
+}
+
+function playBackgroundMusic() {
+  if (!backgroundMusicBuffer) return; // Ensure the music buffer is loaded
+
+  // Create a new audio buffer source
+  backgroundMusicSource = audioContext.createBufferSource();
+  backgroundMusicSource.buffer = backgroundMusicBuffer; // Set the music buffer
+
+  // Connect the source to the destination (speakers)
+  backgroundMusicSource.connect(audioContext.destination);
+
+  // Set the music to loop
+  backgroundMusicSource.loop = true;
+
+  // Start playing the music
+  backgroundMusicSource.start(0);
+}
+
+
+function playRandomizedPitchSound() {
+  if (!keyPressSoundBuffer) return; // Ensure the sound buffer is loaded
+
+  const source = audioContext.createBufferSource(); // Create a new audio buffer source
+  source.buffer = keyPressSoundBuffer; // Set the sound buffer
+
+  // Randomize the playback rate (between 0.8 and 1.2 for slight variation)
+  source.playbackRate.value = Math.random() * 0.4 + 1.2; // Random value between 0.8 and 1.2
+
+  source.connect(audioContext.destination); // Connect the source to the output (speakers)
+  source.start(0); // Start playing the sound
 }
 
 function drawGame() {
@@ -95,7 +149,7 @@ function drawWalls() {
     const scaledHeight = (wall.height / GAME_HEIGHT) * canvas.height;
     const borderRadius = 8; // Adjust this value for the desired border radius
 
-    ctx.fillStyle = "rgba(255, 0, 0, 0)"; // Set fill color
+    ctx.fillStyle = "rgba(255, 0, 0, 0.5)"; // Set fill color
     drawRoundedRect(scaledX, scaledY, scaledWidth, scaledHeight, borderRadius); // Draw the wall with rounded corners
   });
 }
@@ -279,6 +333,7 @@ function startGame() {
   document.getElementById("game-container").classList.remove("hidden");
   document.getElementById("game-canvas").classList.remove("hidden");
   resetPlayerPosition(); // Set up the player and load the level
+  playBackgroundMusic(); 
   gameInterval = setInterval(movePlayer, 20);
 }
 
@@ -298,18 +353,22 @@ document.addEventListener("keydown", (event) => {
     case "ArrowUp":
     case "KeyW":
       currentDirection = { x: 0, y: -1 };
+      playRandomizedPitchSound(); 
       break;
     case "ArrowDown":
     case "KeyS":
       currentDirection = { x: 0, y: 1 };
+      playRandomizedPitchSound(); 
       break;
     case "ArrowLeft":
     case "KeyA":
       currentDirection = { x: -1, y: 0 };
+      playRandomizedPitchSound(); 
       break;
     case "ArrowRight":
     case "KeyD":
       currentDirection = { x: 1, y: 0 };
+      playRandomizedPitchSound(); 
       break;
   }
 });

@@ -36,6 +36,7 @@ let backgroundMusicBuffer;
 let backgroundMusicSource;
 let keyPressGainNode = audioContext.createGain(); // Gain node for key press sound
 let musicGainNode = audioContext.createGain(); // Gain node for background music
+let completionSoundBuffer;
 
 let isMusicPlaying = false;
 
@@ -59,6 +60,15 @@ fetch("backgroundMusic.mp3") // Replace with your music file path
     backgroundMusicBuffer = buffer; // Store the decoded audio data
   })
   .catch(error => console.error("Error loading background music:", error));
+
+// Load the completion sound file
+fetch("completion.mp3") // Replace with your completion sound file path
+  .then(response => response.arrayBuffer())
+  .then(data => audioContext.decodeAudioData(data))
+  .then(buffer => {
+    completionSoundBuffer = buffer; // Store the decoded audio data
+  })
+  .catch(error => console.error("Error loading completion sound:", error));
 
 
 function resizeCanvas() {
@@ -337,11 +347,35 @@ function loadBackgroundImage() {
   };
 }
 
+function playCompletionSound() {
+  if (!completionSoundBuffer) return; // Ensure the sound buffer is loaded
+
+  const source = audioContext.createBufferSource(); // Create a new audio buffer source
+  source.buffer = completionSoundBuffer; // Set the sound buffer
+
+  // Connect the source to the destination
+  source.connect(audioContext.destination);
+
+  // Start playing the sound
+  source.start(0);
+}
+
+function stopSounds() {
+  if (backgroundMusicSource) {
+    backgroundMusicSource.stop(); // Stop the background music
+    isMusicPlaying = false; // Reset the music playing flag
+  }
+  keyPressGainNode.gain.value = 0; // Mute key press sounds
+}
+
 function displayEndMessage() {
   clearInterval(gameInterval);
   document.getElementById("end-message").innerText = "You've reached the endpoint!";
   document.getElementById("end-screen").classList.remove("hidden");
   document.getElementById("game-canvas").classList.add("hidden");
+  document.getElementById("completion-screen").classList.remove("hidden"); // Show completion screen
+  playCompletionSound(); // Play the completion sound
+  stopSounds(); // Stop background and keypress sounds
 }
 
 function startGame() {
@@ -360,6 +394,7 @@ document.getElementById("restart-button").addEventListener("click", () => {
   currentLevelIndex = 0; // Reset to the first level
   document.getElementById("start-screen").classList.remove("hidden"); // Show start screen
   document.getElementById("end-screen").classList.add("hidden"); // Hide end screen
+  document.getElementById("completion-screen").classList.add("hidden"); // Hide completion screen
   document.getElementById("game-canvas").classList.add("hidden");
 });
 
@@ -368,24 +403,27 @@ currentDirection = { x: 1, y: 0 };
 document.addEventListener("keydown", (event) => {
   const keyMapping = levels[currentLevelIndex].keyMapping;
 
-  // Map the keys according to the current level's random mapping
-  switch (event.code) {
-    case keyMapping.up:
-      currentDirection = { x: 0, y: -1 };
-      playRandomizedPitchSound(); 
-      break;
-    case keyMapping.down:
-      currentDirection = { x: 0, y: 1 };
-      playRandomizedPitchSound(); 
-      break;
-    case keyMapping.left:
-      currentDirection = { x: -1, y: 0 };
-      playRandomizedPitchSound(); 
-      break;
-    case keyMapping.right:
-      currentDirection = { x: 1, y: 0 };
-      playRandomizedPitchSound(); 
-      break;
+  if (gameState === "start") {
+    startGame();
+  } else {
+    switch (event.code) {
+      case keyMapping.up:
+        currentDirection = { x: 0, y: -1 };
+        playRandomizedPitchSound(); 
+        break;
+      case keyMapping.down:
+        currentDirection = { x: 0, y: 1 };
+        playRandomizedPitchSound(); 
+        break;
+      case keyMapping.left:
+        currentDirection = { x: -1, y: 0 };
+        playRandomizedPitchSound(); 
+        break;
+      case keyMapping.right:
+        currentDirection = { x: 1, y: 0 };
+        playRandomizedPitchSound(); 
+        break;
+    }
   }
 });
 
@@ -405,7 +443,6 @@ function randomizeKeyMapping() {
 levels.forEach((level) => {
   level.keyMapping = randomizeKeyMapping();
 });
-
 
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
